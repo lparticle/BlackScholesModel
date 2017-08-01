@@ -1,0 +1,9 @@
+Package: plotImpliedVol
+Type: Package
+Title: Black76 Implied Volatility
+Version: 1.0
+Date: 2016-08-30
+Author: Charles Cheng
+Maintainer: Charles<cheng_ike@hotmail.com>
+Description: compute & plot Black76 implied volatility for European options
+License: GPL-2

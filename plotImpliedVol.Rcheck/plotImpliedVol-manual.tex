@@ -1,0 +1,246 @@
+\nonstopmode{}
+\documentclass[a4paper]{book}
+\usepackage[times,inconsolata,hyper]{Rd}
+\usepackage{makeidx}
+\usepackage[utf8,latin1]{inputenc}
+% \usepackage{graphicx} % @USE GRAPHICX@
+\makeindex{}
+\begin{document}
+\chapter*{}
+\begin{center}
+{\textbf{\huge Package `plotImpliedVol'}}
+\par\bigskip{\large \today}
+\end{center}
+\begin{description}
+\raggedright{}
+\item[Type]\AsIs{Package}
+\item[Title]\AsIs{Black76 Implied Volatility}
+\item[Version]\AsIs{1.0}
+\item[Date]\AsIs{2016-08-30}
+\item[Author]\AsIs{Charles Cheng}
+\item[Maintainer]\AsIs{Charles}\email{cheng\_ike@hotmail.com}\AsIs{}
+\item[Description]\AsIs{compute & plot Black76 implied volatility for European options}
+\item[License]\AsIs{GPL-2}
+\end{description}
+\Rdcontents{\R{} topics documented:}
+\inputencoding{utf8}
+\HeaderA{plotImpliedVol-package}{Black76 Implied Volatility}{plotImpliedVol.Rdash.package}
+\keyword{package}{plotImpliedVol-package}
+%
+\begin{Description}\relax
+compute \& plot Black76 implied volatility for European options
+\end{Description}
+%
+\begin{Details}\relax
+
+The DESCRIPTION file:
+This package was not yet installed at build time.\\{}
+
+Index:  This package was not yet installed at build time.\\{}
+compute \& plot Black76 implied volatility
+\end{Details}
+%
+\begin{Author}\relax
+Charles Cheng
+
+Maintainer: Charles<cheng\_ike@hotmail.com>
+\end{Author}
+%
+\begin{Examples}
+\begin{ExampleCode}
+df=data.frame(strike=c(50,20), type=c("C","P"), optionPrice=c(1.62,0.01), futurePrice=c(48.03,48.03), time_to_expiry=c(0.1423,0.1423))
+plotImpliedVol(df)
+
+df=data.frame(strike=c(50,20), type=c("C","P"), optionPrice=c(1.62,0.01), futurePrice=c(48.03,48.03), time_to_expiry=c(0.1423,0.1423), rfRate=c(0.01,0.01))
+plotImpliedVol(df)
+\end{ExampleCode}
+\end{Examples}
+\inputencoding{utf8}
+\HeaderA{black76Value}{Black76Value computation}{black76Value}
+\keyword{black76}{black76Value}
+%
+\begin{Description}\relax
+Black76Value computation
+\end{Description}
+%
+\begin{Usage}
+\begin{verbatim}
+black76Value(insOption, sigma)
+\end{verbatim}
+\end{Usage}
+%
+\begin{Arguments}
+\begin{ldescription}
+\item[\code{insOption}] df rows
+\item[\code{sigma}]  volatility
+\end{ldescription}
+\end{Arguments}
+%
+\begin{Details}\relax
+Black76Value computation
+\end{Details}
+%
+\begin{Value}
+\begin{ldescription}
+\item[\code{Fx }] target function
+\item[\code{comp2 }] Description of 'comp2'
+\end{ldescription}
+\end{Value}
+%
+\begin{Author}\relax
+Charles Cheng
+\end{Author}
+%
+\begin{Examples}
+\begin{ExampleCode}
+##---- Should be DIRECTLY executable !! ----
+##-- ==>  Define data, use random,
+##--	or do  help(data=index)  for the standard data sets.
+
+## The function is currently defined as
+function (insOption, sigma) 
+{
+    X = as.numeric(insOption["strike"])
+    S = as.numeric(insOption["futurePrice"])
+    TTM = as.numeric(insOption["time_to_expiry"])
+    type = insOption["type"]
+    optVal = as.numeric(insOption["optionPrice"])
+    if (is.na(insOption["rfRate"])) {
+        rfRate = 0
+    }
+    else {
+        rfRate = as.numeric(insOption["rfRate"])
+    }
+    if (type == "C") {
+        indicator = 1
+    }
+    else {
+        indicator = -1
+    }
+    sigmaT = sigma * sqrt(TTM)
+    d1 = (log(S/X) + (rfRate + sigma^2/2) * TTM)/sigmaT
+    d2 = d1 - sigmaT
+    Strikerf = X * exp(-rfRate * TTM)
+    B76Val = (pnorm(d1 * indicator) * S - pnorm(d2 * indicator) * 
+        Strikerf) * indicator
+    d2prime = d1/sigma
+    d1prime = sqrt(TTM) + d2prime
+    B76ValPrime = d1prime * dnorm(d1) * S - d2prime * dnorm(d2) * 
+        Strikerf
+    return(list(Fx = (B76Val - optVal), DFx = B76ValPrime))
+  }
+\end{ExampleCode}
+\end{Examples}
+\inputencoding{utf8}
+\HeaderA{nrSolve}{Newton solution}{nrSolve}
+\keyword{Newton-Raphson}{nrSolve}
+%
+\begin{Description}\relax
+Newton solution
+\end{Description}
+%
+\begin{Usage}
+\begin{verbatim}
+nrSolve(insOption, initVol = 1, tol = 1e-07, maxInterations = 100)
+\end{verbatim}
+\end{Usage}
+%
+\begin{Arguments}
+\begin{ldescription}
+\item[\code{insOption}] df row
+\item[\code{initVol}] initial volatility
+\item[\code{tol}] tolerance
+\item[\code{maxInterations}] maximum iteration
+\end{ldescription}
+\end{Arguments}
+%
+\begin{Details}\relax
+Newton-Raphson method
+\end{Details}
+%
+\begin{Value}
+volatility
+\end{Value}
+%
+\begin{Author}\relax
+Charles Cheng
+\end{Author}
+%
+\begin{Examples}
+\begin{ExampleCode}
+##---- Should be DIRECTLY executable !! ----
+##-- ==>  Define data, use random,
+##--	or do  help(data=index)  for the standard data sets.
+
+## The function is currently defined as
+function (insOption, initVol = 1, tol = 1e-07, maxInterations = 100) 
+{
+    count = 0
+    delta = 0
+    vol = initVol
+    while (count < maxInterations) {
+        black76 = black76Value(insOption, vol)
+        if (is.nan(black76$Fx)) {
+            black76$conv = -1
+            return(vol)
+        }
+        if (abs(black76$Fx) < tol) {
+            black76$conv = count
+            return(vol)
+        }
+        count = count + 1
+        delta = black76$Fx/black76$DFx
+        vol = vol - delta
+    }
+    black76$conv = -1
+    return(vol)
+  }
+\end{ExampleCode}
+\end{Examples}
+\inputencoding{utf8}
+\HeaderA{plotImpliedVol}{Black76 Implied Volatility}{plotImpliedVol}
+\keyword{Black76}{plotImpliedVol}
+\keyword{European Option}{plotImpliedVol}
+%
+\begin{Description}\relax
+compute \& plot Black76 implied volatility for European options
+\end{Description}
+%
+\begin{Usage}
+\begin{verbatim}
+plotImpliedVol(df)
+\end{verbatim}
+\end{Usage}
+%
+\begin{Arguments}
+\begin{ldescription}
+\item[\code{df}] data.frame format with 5 or 6 columns: 
+1.df\$strike: the option strike -in \$;  
+2.df\$type: option type: "C" for call and "P" for put;  
+3.df\$optionPrice: the option price -in \$; 
+4.df\$futurePrice: the price of the underlying future -in \$;  
+5.df\$time\_to\_expiry: the option time to expiry -in year;  
+6.df\$rfRate the risk-free-rate, optional input.
+
+\end{ldescription}
+\end{Arguments}
+%
+\begin{Value}
+return the Black76 implied volatilities
+\end{Value}
+%
+\begin{Author}\relax
+Charles Cheng
+\end{Author}
+%
+\begin{Examples}
+\begin{ExampleCode}
+df=data.frame(strike=c(50,20), type=c("C","P"), optionPrice=c(1.62,0.01), futurePrice=c(48.03,48.03), time_to_expiry=c(0.1423,0.1423))
+plotImpliedVol(df)
+
+df=data.frame(strike=c(50,20), type=c("C","P"), optionPrice=c(1.62,0.01), futurePrice=c(48.03,48.03), time_to_expiry=c(0.1423,0.1423), rfRate=c(0.01,0.01))
+plotImpliedVol(df)
+\end{ExampleCode}
+\end{Examples}
+\printindex{}
+\end{document}

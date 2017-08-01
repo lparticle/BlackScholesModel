@@ -1,0 +1,5 @@
+black76Value            Black76Value computation
+nrSolve                 Newton solution
+plotImpliedVol          Black76 Implied Volatility
+plotImpliedVol-package
+                        Black76 Implied Volatility
